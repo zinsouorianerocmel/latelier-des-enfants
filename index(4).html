@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oriane Zinsou — Garde d'enfants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c1f2e;
+    --ivory:#f7f4ee;
+    --gold:#a9834b;
+    --wine:#5c1f2e;
+    --stone:#8b8578;
+    --hair:rgba(28,31,46,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ivory);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;}
+
+  .eyebrow{
+    font-family:'Inter', sans-serif;
+    font-size:11px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:600;
+  }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:400;
+    letter-spacing:-0.01em;
+  }
+
+  .container{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  /* ---------- Monogram ---------- */
+  .monogram{
+    width:76px;
+    height:76px;
+    margin:0 auto;
+  }
+  .monogram svg{width:100%;height:100%;display:block;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    position:relative;
+    padding:80px 32px 60px;
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(169,131,75,0.08), transparent 60%);
+    pointer-events:none;
+  }
+  .hero-name{
+    font-size:clamp(48px, 8vw, 92px);
+    font-weight:300;
+    margin-top:28px;
+    line-height:1.02;
+  }
+  .hero-name em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--wine);
+  }
+  .hero-role{
+    margin-top:18px;
+    font-size:15px;
+    color:var(--stone);
+    letter-spacing:0.04em;
+  }
+  .hero-role .sep{color:var(--gold); margin:0 10px;}
+
+  .hero-scroll{
+    position:absolute;
+    bottom:36px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    opacity:0.55;
+  }
+  .hero-scroll span{
+    font-size:10px;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color:var(--ink);
+  }
+  .hero-scroll .line{
+    width:1px; height:34px;
+    background:linear-gradient(var(--ink), transparent);
+  }
+
+  /* ---------- Divider ---------- */
+  .divider{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    margin:0 auto;
+    max-width:920px;
+    padding:0 32px;
+  }
+  .divider .rule{flex:1; height:1px; background:var(--hair);}
+  .divider .mark{
+    width:7px;height:7px;
+    border:1px solid var(--gold);
+    transform:rotate(45deg);
+    flex-shrink:0;
+  }
+
+  /* ---------- Section shell ---------- */
+  section{padding:110px 0;}
+  .section-head{
+    text-align:center;
+    margin-bottom:64px;
+  }
+  .section-head h2{
+    font-size:clamp(30px, 4vw, 42px);
+    font-weight:300;
+    margin-top:14px;
+  }
+  .section-head p.lede{
+    max-width:560px;
+    margin:20px auto 0;
+    color:var(--stone);
+    font-size:16px;
+  }
+
+  /* ---------- Presentation ---------- */
+  .presentation{
+    max-width:680px;
+    margin:0 auto;
+    text-align:center;
+  }
+  .presentation p{
+    font-size:18px;
+    color:#3a3d4a;
+    margin-bottom:22px;
+  }
+  .presentation p:last-child{margin-bottom:0;}
+
+  /* ---------- Activities ---------- */
+  .age-groups{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:var(--hair);
+    border:1px solid var(--hair);
+  }
+  .age-card{
+    background:var(--ivory);
+    padding:44px 32px;
+    text-align:center;
+    position:relative;
+    transition:background 0.35s ease;
+  }
+  .age-card:hover{background:#efe9db;}
+  .age-card .icon{
+    width:44px;height:44px;
+    margin:0 auto 22px;
+    color:var(--wine);
+  }
+  .age-card .icon svg{width:100%;height:100%;}
+  .age-range{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:15px;
+    color:var(--gold);
+    margin-bottom:10px;
+    display:block;
+  }
+  .age-card h3{
+    font-size:22px;
+    font-weight:400;
+    margin-bottom:14px;
+  }
+  .age-card p{
+    font-size:14.5px;
+    color:var(--stone);
+    line-height:1.7;
+  }
+  @media (max-width:760px){
+    .age-groups{grid-template-columns:1fr;}
+  }
+
+  .extra-services{
+    margin-top:56px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:14px;
+  }
+  .pill{
+    border:1px solid var(--hair);
+    padding:12px 24px;
+    font-size:13.5px;
+    letter-spacing:0.03em;
+    color:var(--ink);
+    background:#fff;
+    white-space:nowrap;
+  }
+  .pill strong{color:var(--wine); font-weight:500;}
+
+  /* ---------- Trust ---------- */
+  .trust{background:var(--ink); color:var(--ivory);}
+  .trust .eyebrow{color:var(--gold);}
+  .trust .section-head p.lede{color:rgba(247,244,238,0.6);}
+  .trust-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:48px 64px;
+    max-width:720px;
+    margin:0 auto;
+  }
+  .trust-item{display:flex; gap:18px;}
+  .trust-item .num{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:26px;
+    color:var(--gold);
+    flex-shrink:0;
+    width:34px;
+  }
+  .trust-item h4{
+    font-family:'Fraunces', serif;
+    font-weight:400;
+    font-size:18px;
+    margin-bottom:6px;
+  }
+  .trust-item p{
+    font-size:14px;
+    color:rgba(247,244,238,0.62);
+  }
+  @media (max-width:640px){
+    .trust-grid{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Availability + contact ---------- */
+  .contact-wrap{text-align:center;}
+  .contact-card{
+    max-width:420px;
+    margin:0 auto;
+    border:1px solid var(--hair);
+    padding:56px 40px;
+    background:#fff;
+    position:relative;
+  }
+  .contact-card::before,
+  .contact-card::after{
+    content:"";
+    position:absolute;
+    width:16px;height:16px;
+    border:1px solid var(--gold);
+  }
+  .contact-card::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+  .contact-card::after{bottom:-1px;right:-1px;border-left:none;border-top:none;}
+
+  .avail-line{
+    font-size:15px;
+    color:var(--stone);
+    margin-bottom:34px;
+  }
+  .avail-line strong{color:var(--ink); font-weight:500;}
+
+  .contact-name{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:22px;
+    margin-bottom:4px;
+  }
+  .contact-phone{
+    font-size:19px;
+    letter-spacing:0.02em;
+    margin-top:18px;
+  }
+  .contact-email{
+    font-size:14.5px;
+    color:var(--stone);
+    margin-top:6px;
+  }
+  .contact-phone a, .contact-email a{text-decoration:none; border-bottom:1px solid transparent; transition:border-color .3s;}
+  .contact-phone a:hover, .contact-email a:hover{border-color:var(--gold);}
+
+  footer{
+    text-align:center;
+    padding:48px 32px 56px;
+    font-size:12px;
+    letter-spacing:0.08em;
+    color:var(--stone);
+    text-transform:uppercase;
+  }
+
+  /* reveal on scroll */
+  .reveal{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible{opacity:1; transform:translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1; transform:none; transition:none;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="monogram">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" stroke="#a9834b" stroke-width="1"/>
+      <circle cx="50" cy="50" r="42" stroke="#1c1f2e" stroke-width="0.6"/>
+      <text x="50" y="60" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="34" fill="#1c1f2e">OZ</text>
+    </svg>
+  </div>
+  <div class="eyebrow">Garde d'enfants &nbsp;·&nbsp; Strasbourg</div>
+  <h1 class="hero-name">Oriane <em>Zinsou</em></h1>
+  <p class="hero-role">Étudiante en cybersécurité<span class="sep">✦</span>Au service des familles exigeantes</p>
+  <a href="reservation.html" style="display:inline-block; margin-top:32px; padding:14px 36px; background:var(--ink); color:var(--ivory); text-decoration:none; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; transition:background .25s;" onmouseover="this.style.background='#5c1f2e'" onmouseout="this.style.background='#1c1f2e'">Réserver en ligne</a>
+  <div class="hero-scroll"><span>Découvrir</span><div class="line"></div></div>
+</section>
+
+<div class="divider"><div class="rule"></div><div class="mark"></div><div class="rule"></div></div>
+
+<section class="presentation reveal">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Présentation</div>
+      <h2>Une présence familière,<br>pas une inconnue de plus</h2>
+    </div>
+    <p>Grande sœur de deux petits frères de 5 et 7 ans que j'accompagne depuis leur naissance, la garde d'enfants fait partie de mon quotidien depuis toujours — repas, bain, devoirs, coucher, gestion des imprévus.</p>
+    <p>Je finance mes études en cybersécurité en mettant cette expérience au service d'autres familles, à travers des gardes ponctuelles, des gardes de nuit et des séjours de plusieurs jours consécutifs.</p>
+  </div>
+</section>
+
+<div class="divider"><div class="rule"></div><div class="mark"></div><div class="rule"></div></div>
+
+<section class="reveal">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Ce que je propose</div>
+      <h2>Un accompagnement pensé<br>selon l'âge de l'enfant</h2>
+      <p class="lede">De 1 à 12 ans, chaque tranche d'âge a son propre rythme — et sa propre manière d'être accompagnée.</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="age-groups">
+      <div class="age-card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3">
+            <circle cx="24" cy="15" r="7"/>
+            <path d="M10 42c0-9 6-15 14-15s14 6 14 15"/>
+          </svg>
+        </div>
+        <span class="age-range">1 — 3 ans</span>
+        <h3>Éveil & tout-petits</h3>
+        <p>Jeux sensoriels, rituels de sommeil respectés, repas et biberons, attention constante et douce.</p>
+      </div>
+      <div class="age-card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M8 38l10-24 6 14 4-9 12 19"/>
+            <circle cx="34" cy="10" r="3"/>
+          </svg>
+        </div>
+        <span class="age-range">4 — 7 ans</span>
+        <h3>Créativité & jeu</h3>
+        <p>Activités manuelles, imaginaire, premiers apprentissages, sorties encadrées et gestion des allergies alimentaires.</p>
+      </div>
+      <div class="age-card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3">
+            <rect x="10" y="10" width="28" height="22" rx="1"/>
+            <path d="M16 18h16M16 24h12"/>
+          </svg>
+        </div>
+        <span class="age-range">8 — 12 ans</span>
+        <h3>Autonomie & devoirs</h3>
+        <p>Aide aux devoirs (primaire et collège), organisation des activités, accompagnement respectueux de leur indépendance grandissante.</p>
+      </div>
+    </div>
+
+    <div class="extra-services">
+      <div class="pill"><strong>Garde de nuit</strong> — soirées et sorties des parents</div>
+      <div class="pill"><strong>Plusieurs jours</strong> — séjours et déplacements</div>
+      <div class="pill"><strong>Anglais</strong> — niveau intermédiaire</div>
+    </div>
+  </div>
+</section>
+
+<section class="trust reveal">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Confiance</div>
+      <h2>La discrétion d'une maison,<br>la rigueur d'une formation</h2>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-item">
+        <div class="num">I</div>
+        <div>
+          <h4>Casier judiciaire vierge</h4>
+          <p>Justificatif transmis sur simple demande.</p>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="num">II</div>
+        <div>
+          <h4>Références vérifiables</h4>
+          <p>Familles précédentes disponibles pour témoigner.</p>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="num">III</div>
+        <div>
+          <h4>Confidentialité totale</h4>
+          <p>Respect absolu de la vie privée de la famille.</p>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="num">IV</div>
+        <div>
+          <h4>Rigueur & fiabilité</h4>
+          <p>Qualités cultivées par ma formation en cybersécurité.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><div class="rule"></div><div class="mark"></div><div class="rule"></div></div>
+
+<section class="contact-wrap reveal">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Disponibilité</div>
+      <h2>Strasbourg & ses environs</h2>
+      <p class="lede">Disponible toutes les vacances scolaires, pour une soirée comme pour plusieurs jours.</p>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-name">Oriane Zinsou</div>
+      <div class="avail-line">Réservation & renseignements</div>
+      <div class="contact-phone"><a href="tel:+33758900343">+33 7 58 90 03 43</a></div>
+      <div class="contact-email"><a href="mailto:zinsouorianerocmel@gmail.com">zinsouorianerocmel@gmail.com</a></div>
+      <a href="reservation.html" style="display:inline-block; margin-top:24px; padding:12px 28px; border:1px solid var(--gold); color:var(--wine); text-decoration:none; font-size:12.5px; letter-spacing:0.06em; text-transform:uppercase;">Réserver en ligne</a>
+    </div>
+  </div>
+</section>
+
+<footer>Oriane Zinsou — Garde d'enfants sur mesure</footer>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.12});
+  revealEls.forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
