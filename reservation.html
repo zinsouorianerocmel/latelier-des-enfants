@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réserver — Oriane Zinsou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="back">← Retour au site</a>
+  <div class="brand">Oriane Zinsou</div>
+</div>
+
+<div class="wrap">
+  <span class="eyebrow">Espace parents</span>
+  <h1 class="title">Réserver une garde</h1>
+  <div class="user-badge">
+    Connecté en tant que <strong id="user-email-display">...</strong>
+    <button id="btn-logout">Se déconnecter</button>
+  </div>
+
+  <div class="card">
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-mode="hourly">À l'heure</div>
+      <div class="mode-tab" data-mode="night">Nuit complète</div>
+      <div class="mode-tab" data-mode="multiday">Plusieurs jours</div>
+    </div>
+
+    <div class="field-group active" id="fields-hourly">
+      <label for="hourly-date">Date</label>
+      <input type="date" id="hourly-date">
+      <div class="row2">
+        <div>
+          <label for="hourly-start">Heure d'arrivée</label>
+          <input type="time" id="hourly-start" value="17:00">
+        </div>
+        <div>
+          <label for="hourly-end">Heure de départ</label>
+          <input type="time" id="hourly-end" value="21:00">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group" id="fields-night">
+      <label for="night-date">Date d'arrivée</label>
+      <input type="date" id="night-date">
+      <label for="night-count">Nombre de nuits</label>
+      <input type="number" id="night-count" value="1" min="1">
+    </div>
+
+    <div class="field-group" id="fields-multiday">
+      <label for="multi-start">Date de début</label>
+      <input type="date" id="multi-start">
+      <label for="multi-end">Date de fin</label>
+      <input type="date" id="multi-end">
+    </div>
+
+    <label for="children-count">Nombre d'enfants</label>
+    <input type="number" id="children-count" value="1" min="1">
+
+    <label for="notes">Précisions (allergies, adresse, remarques...)</label>
+    <input type="text" id="notes" placeholder="Optionnel">
+
+    <div class="price-box">
+      <span class="label">Montant estimé</span>
+      <span class="amount" id="price-display">0 €</span>
+    </div>
+
+    <label style="margin-top:24px;">Mode de paiement</label>
+    <div class="pay-choice">
+      <div class="pay-option selected" data-pay="paypal">Payer par PayPal</div>
+      <div class="pay-option" data-pay="cash">Payer en espèces</div>
+    </div>
+
+    <div id="paypal-button-container"></div>
+    <button class="btn hidden" id="btn-confirm-cash">Confirmer la réservation (paiement en espèces)</button>
+
+    <div class="msg" id="booking-msg"></div>
+  </div>
+</div>
+
+<script src="shared-config.js"></script>
+<script>
+let currentUser = null;
+let currentMode = "hourly";
+let currentPayment = "paypal";
+
+function showMsg(id, text, type){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg show ' + type;
+}
+
+/* ================================================================
+   VERIFICATION DE CONNEXION — redirige si pas connecte
+   ================================================================ */
+(async () => {
+  if(!supabase){
+    showMsg('booking-msg', "Le service n'est pas disponible. Vérifiez votre connexion internet ou essayez avec Chrome/Safari.", 'err');
+    return;
+  }
+  const { data } = await supabase.auth.getSession();
+  if(!data.session || !data.session.user){
+    window.location.href = "connexion.html";
+    return;
+  }
+  currentUser = data.session.user;
+  document.getElementById('user-email-display').textContent = currentUser.email;
+  renderPaymentUI();
+  updatePrice();
+})();
+
+document.getElementById('btn-logout').onclick = async () => {
+  if(supabase) await supabase.auth.signOut();
+  window.location.href = "connexion.html";
+};
+
+/* ================================================================
+   MODES DE RESERVATION
+   ================================================================ */
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.querySelectorAll('.field-group').forEach(g => g.classList.remove('active'));
+    document.getElementById('fields-' + currentMode).classList.add('active');
+    updatePrice();
+  };
+});
+
+/* ================================================================
+   CALCUL DU PRIX
+   ================================================================ */
+function updatePrice(){
+  const amount = computeAmount();
+  document.getElementById('price-display').textContent = amount.toFixed(2) + " €";
+  renderPaymentUI();
+}
+
+function computeAmount(){
+  const R = CONFIG.RATES;
+  if(currentMode === 'hourly'){
+    const start = document.getElementById('hourly-start').value;
+    const end = document.getElementById('hourly-end').value;
+    if(!start || !end) return 0;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let startMin = sh*60+sm, endMin = eh*60+em;
+    if(endMin <= startMin) endMin += 24*60;
+    const eveningStartMin = CONFIG.EVENING_STARTS_AT*60;
+    let dayMinutes = 0, eveningMinutes = 0;
+    for(let m = startMin; m < endMin; m++){
+      if((m % (24*60)) >= eveningStartMin) eveningMinutes++;
+      else dayMinutes++;
+    }
+    return (dayMinutes/60)*R.day + (eveningMinutes/60)*R.evening;
+  }
+  if(currentMode === 'night'){
+    const nights = parseInt(document.getElementById('night-count').value) || 0;
+    return nights * R.night;
+  }
+  if(currentMode === 'multiday'){
+    const start = document.getElementById('multi-start').value;
+    const end = document.getElementById('multi-end').value;
+    if(!start || !end) return 0;
+    const d1 = new Date(start), d2 = new Date(end);
+    const days = Math.max(1, Math.round((d2-d1)/(1000*60*60*24)) + 1);
+    return days * R.multiday;
+  }
+  return 0;
+}
+
+['hourly-date','hourly-start','hourly-end','night-count','night-date','multi-start','multi-end']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updatePrice);
+  });
+
+/* ================================================================
+   PAIEMENT
+   ================================================================ */
+document.querySelectorAll('.pay-option').forEach(opt => {
+  opt.onclick = () => {
+    document.querySelectorAll('.pay-option').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    currentPayment = opt.dataset.pay;
+    renderPaymentUI();
+  };
+});
+
+function renderPaymentUI(){
+  if(!currentUser) return;
+  const paypalContainer = document.getElementById('paypal-button-container');
+  const cashBtn = document.getElementById('btn-confirm-cash');
+
+  if(currentPayment === 'cash'){
+    paypalContainer.innerHTML = '';
+    cashBtn.classList.remove('hidden');
+    return;
+  }
+  cashBtn.classList.add('hidden');
+  paypalContainer.innerHTML = '';
+
+  if(!window.paypal){
+    const s = document.createElement('script');
+    s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR`;
+    s.onload = () => renderPaypalButtons();
+    document.body.appendChild(s);
+  } else {
+    renderPaypalButtons();
+  }
+}
+
+function renderPaypalButtons(){
+  const container = document.getElementById('paypal-button-container');
+  container.innerHTML = '';
+  window.paypal.Buttons({
+    style:{ layout:'vertical', color:'black', shape:'rect', label:'pay' },
+    createOrder: (data, actions) => {
+      const amount = computeAmount();
+      return actions.order.create({
+        purchase_units: [{ amount: { value: amount.toFixed(2), currency_code: 'EUR' } }]
+      });
+    },
+    onApprove: async (data, actions) => {
+      const order = await actions.order.capture();
+      await saveReservation('paypal', 'payé', order.id);
+    },
+    onError: () => {
+      showMsg('booking-msg', "Le paiement PayPal a échoué. Réessayez ou choisissez 'Espèces'.", 'err');
+    }
+  }).render('#paypal-button-container');
+}
+
+document.getElementById('btn-confirm-cash').onclick = async () => {
+  await saveReservation('cash', 'en attente (espèces)', null);
+};
+
+/* ================================================================
+   ENREGISTREMENT + EMAILS
+   ================================================================ */
+async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
+  if(!supabase || !currentUser) return;
+  const amount = computeAmount();
+  const children = document.getElementById('children-count').value;
+  const notes = document.getElementById('notes').value;
+
+  let details = {};
+  if(currentMode === 'hourly'){
+    details = {
+      date: document.getElementById('hourly-date').value,
+      start_time: document.getElementById('hourly-start').value,
+      end_time: document.getElementById('hourly-end').value
+    };
+  } else if(currentMode === 'night'){
+    details = {
+      date: document.getElementById('night-date').value,
+      nights: document.getElementById('night-count').value
+    };
+  } else if(currentMode === 'multiday'){
+    details = {
+      start_date: document.getElementById('multi-start').value,
+      end_date: document.getElementById('multi-end').value
+    };
+  }
+
+  const reservation = {
+    user_id: currentUser.id,
+    parent_email: currentUser.email,
+    parent_name: currentUser.user_metadata?.full_name || '',
+    parent_phone: currentUser.user_metadata?.phone || '',
+    mode: currentMode,
+    details: details,
+    children_count: children,
+    notes: notes,
+    amount: amount,
+    payment_method: paymentMethod,
+    payment_status: paymentStatus,
+    paypal_order_id: paypalOrderId
+  };
+
+  const { error } = await supabase.from('reservations').insert(reservation);
+  if(error){
+    showMsg('booking-msg', "Erreur lors de l'enregistrement : " + error.message, 'err');
+    return;
+  }
+
+  showMsg('booking-msg', "Réservation envoyée ! Vous recevrez une confirmation par e-mail sous peu.", 'ok');
+
+  const detailsText = JSON.stringify(details, null, 2);
+
+  if(window.emailjs){
+    emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_OWNER, {
+      to_email: CONFIG.OWNER_EMAIL,
+      parent_name: reservation.parent_name,
+      parent_email: reservation.parent_email,
+      parent_phone: reservation.parent_phone,
+      mode: currentMode,
+      details: detailsText,
+      children_count: children,
+      notes: notes,
+      amount: amount.toFixed(2),
+      payment_method: paymentMethod,
+      payment_status: paymentStatus
+    });
+
+    emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_PARENT, {
+      to_email: reservation.parent_email,
+      parent_name: reservation.parent_name,
+      owner_name: CONFIG.OWNER_NAME,
+      mode: currentMode,
+      details: detailsText,
+      children_count: children,
+      amount: amount.toFixed(2),
+      payment_method: paymentMethod,
+      payment_status: paymentStatus
+    });
+  }
+}
+</script>
+
+</body>
+</html>
