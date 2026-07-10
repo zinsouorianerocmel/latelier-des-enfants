@@ -11,17 +11,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
+ 
 <div class="topbar">
   <a href="index.html" class="back">← Retour au site</a>
   <div class="brand">Oriane Zinsou</div>
 </div>
-
+ 
 <div class="wrap">
   <span class="eyebrow">Espace parents</span>
   <h1 class="title">Se connecter</h1>
   <p class="subtitle">Pour réserver une garde en ligne</p>
-
+ 
   <div class="card">
     <label for="login-email">Adresse e-mail</label>
     <input type="email" id="login-email" placeholder="vous@exemple.com">
@@ -33,7 +33,7 @@
     <div class="switch-mode">Pas encore de compte ? <a href="compte.html">Créer un compte</a></div>
   </div>
 </div>
-
+ 
 <script src="shared-config.js"></script>
 <script>
 function showMsg(id, text, type){
@@ -41,7 +41,7 @@ function showMsg(id, text, type){
   el.textContent = text;
   el.className = 'msg show ' + type;
 }
-
+ 
 document.getElementById('btn-login').onclick = async () => {
   if(!supabase){
     showMsg('login-msg', "Le service de connexion n'est pas disponible. Vérifiez votre connexion internet ou essayez avec Chrome/Safari.", 'err');
@@ -49,28 +49,37 @@ document.getElementById('btn-login').onclick = async () => {
   }
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-
+ 
   if(!email || !password){
     showMsg('login-msg', "Merci de remplir tous les champs.", 'err');
     return;
   }
-
+ 
   const btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = "Connexion en cours...";
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  btn.disabled = false; btn.textContent = "Se connecter";
-
-  if(error){
-    showMsg('login-msg', error.message, 'err');
-    return;
+ 
+  try {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Le serveur ne répond pas (délai dépassé). Vérifiez votre connexion internet.")), 10000));
+    const { data, error } = await Promise.race([
+      supabase.auth.signInWithPassword({ email, password }),
+      timeout
+    ]);
+ 
+    if(error){
+      showMsg('login-msg', error.message, 'err');
+      return;
+    }
+ 
+    showMsg('login-msg', "Connecté ! Redirection...", 'ok');
+    setTimeout(() => { window.location.href = "reservation.html"; }, 800);
+  } catch(err){
+    showMsg('login-msg', "Erreur réseau : " + err.message, 'err');
+    showDebug("Login : " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Se connecter";
   }
-
-  showMsg('login-msg', "Connecté ! Redirection...", 'ok');
-  setTimeout(() => { window.location.href = "reservation.html"; }, 800);
 };
-
+ 
 // Si deja connecte, redirection directe
 if(supabase){
   (async () => {
@@ -81,6 +90,7 @@ if(supabase){
   })();
 }
 </script>
-
+ 
 </body>
 </html>
+ 
