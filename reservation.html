@@ -102,24 +102,37 @@ function showMsg(id, text, type){
    VERIFICATION DE CONNEXION — redirige si pas connecte
    ================================================================ */
 (async () => {
-  if(!supabase){
-    showMsg('booking-msg', "Le service n'est pas disponible. Vérifiez votre connexion internet ou essayez avec Chrome/Safari.", 'err');
-    return;
+  try {
+    if(!supabase){
+      showMsg('booking-msg', "Le service n'est pas disponible. Vérifiez votre connexion internet ou essayez avec Chrome/Safari.", 'err');
+      return;
+    }
+    const { data, error } = await supabase.auth.getSession();
+    if(error){
+      showDebug("getSession : " + error.message);
+      return;
+    }
+    if(!data.session || !data.session.user){
+      window.location.href = "connexion.html";
+      return;
+    }
+    currentUser = data.session.user;
+    document.getElementById('user-email-display').textContent = currentUser.email || "(email inconnu)";
+    renderPaymentUI();
+    updatePrice();
+  } catch(err){
+    showDebug("Vérification de session : " + err.message);
   }
-  const { data } = await supabase.auth.getSession();
-  if(!data.session || !data.session.user){
-    window.location.href = "connexion.html";
-    return;
-  }
-  currentUser = data.session.user;
-  document.getElementById('user-email-display').textContent = currentUser.email;
-  renderPaymentUI();
-  updatePrice();
 })();
 
 document.getElementById('btn-logout').onclick = async () => {
-  if(supabase) await supabase.auth.signOut();
-  window.location.href = "connexion.html";
+  try {
+    if(supabase) await supabase.auth.signOut();
+  } catch(err){
+    showDebug("Déconnexion : " + err.message);
+  } finally {
+    window.location.href = "connexion.html";
+  }
 };
 
 /* ================================================================
@@ -197,7 +210,10 @@ document.querySelectorAll('.pay-option').forEach(opt => {
 });
 
 function renderPaymentUI(){
-  if(!currentUser) return;
+  if(!currentUser){
+    showDebug("Impossible d'afficher le paiement : utilisateur non chargé (problème de connexion à Supabase).");
+    return;
+  }
   const paypalContainer = document.getElementById('paypal-button-container');
   const cashBtn = document.getElementById('btn-confirm-cash');
 
@@ -209,13 +225,18 @@ function renderPaymentUI(){
   cashBtn.classList.add('hidden');
   paypalContainer.innerHTML = '';
 
-  if(!window.paypal){
-    const s = document.createElement('script');
-    s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR`;
-    s.onload = () => renderPaypalButtons();
-    document.body.appendChild(s);
-  } else {
-    renderPaypalButtons();
+  try {
+    if(!window.paypal){
+      const s = document.createElement('script');
+      s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR`;
+      s.onload = () => renderPaypalButtons();
+      s.onerror = () => showDebug("Le script PayPal n'a pas pu se charger (vérifiez votre connexion internet).");
+      document.body.appendChild(s);
+    } else {
+      renderPaypalButtons();
+    }
+  } catch(err){
+    showDebug("PayPal : " + err.message);
   }
 }
 
