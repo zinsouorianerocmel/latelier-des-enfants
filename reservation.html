@@ -80,6 +80,11 @@
     </div>
  
     <div id="paypal-button-container"></div>
+    <p id="paypalme-note" style="text-align:center; font-size:13px; color:var(--stone); margin-top:4px; display:none;">
+      1. Cliquez sur le lien pour payer :
+      <a href="https://www.paypal.com/paypalme/latelierdesenfants67" target="_blank" style="color:var(--wine); text-decoration:underline; font-weight:600;">PayPal.me/latelierdesenfants67</a><br>
+      2. Une fois le paiement fait, cliquez sur le bouton ci-dessous pour confirmer votre réservation.
+    </p>
     <button class="btn hidden" id="btn-confirm-cash">Confirmer la réservation (paiement en espèces)</button>
  
     <div class="msg" id="booking-msg"></div>
@@ -327,14 +332,32 @@ function renderPaymentUI(){
   }
   const paypalContainer = document.getElementById('paypal-button-container');
   const cashBtn = document.getElementById('btn-confirm-cash');
+  const paypalMeNote = document.getElementById('paypalme-note');
  
   if(currentPayment === 'cash'){
     paypalContainer.style.display = 'none';
+    paypalMeNote.style.display = 'none';
     cashBtn.classList.remove('hidden');
+    cashBtn.textContent = "Confirmer la réservation (paiement en espèces)";
+    cashBtn.onclick = () => saveReservation('cash', 'en attente (espèces)', null);
     return;
   }
-  cashBtn.classList.add('hidden');
+ 
+  // Paiement PayPal
+  if(!CONFIG.PAYPAL_LIVE_READY){
+    // Le paiement automatique PayPal n'est pas encore actif cote compte (verification en cours).
+    // On propose le lien PayPal.me avec confirmation manuelle, comme pour les especes.
+    paypalContainer.style.display = 'none';
+    paypalMeNote.style.display = 'block';
+    cashBtn.classList.remove('hidden');
+    cashBtn.textContent = "J'ai payé via PayPal.me — Confirmer ma réservation";
+    cashBtn.onclick = () => saveReservation('paypal.me', 'en attente (à vérifier)', null);
+    return;
+  }
+ 
   paypalContainer.style.display = '';
+  paypalMeNote.style.display = 'none';
+  cashBtn.classList.add('hidden');
  
   if(paypalRendered) return; // deja affiche, pas besoin de recreer (evite l'erreur PayPal "zoid")
  
@@ -344,7 +367,7 @@ function renderPaymentUI(){
     } else if(!paypalScriptLoading){
       paypalScriptLoading = true;
       const s = document.createElement('script');
-      s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR`;
+      s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR&enable-funding=card`;
       s.onload = () => { paypalScriptLoading = false; renderPaypalButtons(); };
       s.onerror = () => { paypalScriptLoading = false; showDebug("Le script PayPal n'a pas pu se charger (vérifiez votre connexion internet)."); };
       document.body.appendChild(s);
@@ -375,9 +398,8 @@ function renderPaypalButtons(){
   }).render('#paypal-button-container');
 }
  
-document.getElementById('btn-confirm-cash').onclick = async () => {
-  await saveReservation('cash', 'en attente (espèces)', null);
-};
+// Le handler du bouton "espèces / PayPal.me" est desormais assigne dynamiquement
+// dans renderPaymentUI(), car son texte et son comportement changent selon le mode.
  
 /* ================================================================
    ENREGISTREMENT + EMAILS
@@ -464,3 +486,4 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
  
 </body>
 </html>
+ 
