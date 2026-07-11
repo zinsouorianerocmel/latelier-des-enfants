@@ -317,6 +317,9 @@ document.querySelectorAll('.pay-option').forEach(opt => {
   };
 });
  
+let paypalRendered = false;
+let paypalScriptLoading = false;
+ 
 function renderPaymentUI(){
   if(!currentUser){
     showDebug("Impossible d'afficher le paiement : utilisateur non chargé (problème de connexion à Supabase).");
@@ -326,22 +329,25 @@ function renderPaymentUI(){
   const cashBtn = document.getElementById('btn-confirm-cash');
  
   if(currentPayment === 'cash'){
-    paypalContainer.innerHTML = '';
+    paypalContainer.style.display = 'none';
     cashBtn.classList.remove('hidden');
     return;
   }
   cashBtn.classList.add('hidden');
-  paypalContainer.innerHTML = '';
+  paypalContainer.style.display = '';
+ 
+  if(paypalRendered) return; // deja affiche, pas besoin de recreer (evite l'erreur PayPal "zoid")
  
   try {
-    if(!window.paypal){
+    if(window.paypal){
+      renderPaypalButtons();
+    } else if(!paypalScriptLoading){
+      paypalScriptLoading = true;
       const s = document.createElement('script');
       s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=EUR`;
-      s.onload = () => renderPaypalButtons();
-      s.onerror = () => showDebug("Le script PayPal n'a pas pu se charger (vérifiez votre connexion internet).");
+      s.onload = () => { paypalScriptLoading = false; renderPaypalButtons(); };
+      s.onerror = () => { paypalScriptLoading = false; showDebug("Le script PayPal n'a pas pu se charger (vérifiez votre connexion internet)."); };
       document.body.appendChild(s);
-    } else {
-      renderPaypalButtons();
     }
   } catch(err){
     showDebug("PayPal : " + err.message);
@@ -349,8 +355,8 @@ function renderPaymentUI(){
 }
  
 function renderPaypalButtons(){
-  const container = document.getElementById('paypal-button-container');
-  container.innerHTML = '';
+  if(paypalRendered) return;
+  paypalRendered = true;
   window.paypal.Buttons({
     style:{ layout:'vertical', color:'black', shape:'rect', label:'pay' },
     createOrder: (data, actions) => {
@@ -458,4 +464,3 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
  
 </body>
 </html>
- 
