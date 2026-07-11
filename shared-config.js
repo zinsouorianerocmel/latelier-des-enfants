@@ -4,17 +4,17 @@
 const CONFIG = {
   SUPABASE_URL: "https://psvmmughgagggalavnrv.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_C-tEmOPK1iRR6bKG490hTQ_CIDpi45o",
-
+ 
   EMAILJS_PUBLIC_KEY: "qtSxvtlkT5Oyebnw-",
   EMAILJS_SERVICE_ID: "service_11d8zur",
   EMAILJS_TEMPLATE_OWNER: "template_y97c61m",
   EMAILJS_TEMPLATE_PARENT: "template_amojq6e",
-
+ 
   PAYPAL_CLIENT_ID: "Afan1JosdweYaD3YhMbqrwahEbsONCF_F2Di3MzNv6iOtlal7rozQGX3k39leF99D43ZZULcrdNuVfDz",
-
+ 
   OWNER_EMAIL: "zinsouorianerocmel@gmail.com",
   OWNER_NAME: "Oriane Zinsou",
-
+ 
   RATES: {
     day: 14,
     evening: 17,
@@ -23,7 +23,7 @@ const CONFIG = {
   },
   EVENING_STARTS_AT: 19
 };
-
+ 
 /* ================================================================
    BANDEAU D'ERREUR VISIBLE SUR LA PAGE (debug mobile)
    ================================================================ */
@@ -44,7 +44,7 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   showDebug((e.reason && e.reason.message) ? e.reason.message : String(e.reason));
 });
-
+ 
 /* ================================================================
    INITIALISATION SUPABASE / EMAILJS (protegee)
    ================================================================ */
@@ -53,11 +53,18 @@ try {
   if(!window.supabase){
     throw new Error("La librairie Supabase ne s'est pas chargée. Essayez d'ouvrir cette page dans Chrome ou Safari directement (pas depuis Instagram/WhatsApp).");
   }
+  if(typeof window.supabase.createClient !== 'function'){
+    throw new Error("Version de la librairie Supabase inattendue (createClient absent). Type reçu : " + typeof window.supabase);
+  }
   supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  if(!supabase || !supabase.auth){
+    throw new Error("Le client Supabase créé est incomplet (pas de .auth). Clés reçues : " + (supabase ? Object.keys(supabase).join(', ') : 'aucune'));
+  }
 } catch(err){
   showDebug(err.message);
+  supabase = null;
 }
-
+ 
 try {
   if(window.emailjs){
     emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
@@ -65,3 +72,4 @@ try {
 } catch(err){
   showDebug("EmailJS : " + err.message);
 }
+ 
