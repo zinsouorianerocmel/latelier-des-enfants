@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Réserver — L'atelier des enfants </title>
+<title>Réserver — Oriane Zinsou</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
-
+ 
 <div class="topbar">
   <a href="index.html" class="back">← Retour au site</a>
-  <div class="brand">L'atelier des enfants </div>
+  <div class="brand">Oriane Zinsou</div>
 </div>
-
+ 
 <div class="wrap">
   <span class="eyebrow">Espace parents</span>
   <h1 class="title">Réserver une garde</h1>
@@ -25,14 +25,14 @@
     Connecté en tant que <strong id="user-email-display">...</strong>
     <button id="btn-logout">Se déconnecter</button>
   </div>
-
+ 
   <div class="card">
     <div class="mode-tabs">
       <div class="mode-tab active" data-mode="hourly">À l'heure</div>
       <div class="mode-tab" data-mode="night">Nuit complète</div>
       <div class="mode-tab" data-mode="multiday">Plusieurs jours</div>
     </div>
-
+ 
     <div class="field-group active" id="fields-hourly">
       <label for="hourly-date">Date</label>
       <input type="date" id="hourly-date">
@@ -47,57 +47,165 @@
         </div>
       </div>
     </div>
-
+ 
     <div class="field-group" id="fields-night">
       <label for="night-date">Date d'arrivée</label>
       <input type="date" id="night-date">
       <label for="night-count">Nombre de nuits</label>
       <input type="number" id="night-count" value="1" min="1">
     </div>
-
+ 
     <div class="field-group" id="fields-multiday">
       <label for="multi-start">Date de début</label>
       <input type="date" id="multi-start">
       <label for="multi-end">Date de fin</label>
       <input type="date" id="multi-end">
     </div>
-
+ 
     <label for="children-count">Nombre d'enfants</label>
     <input type="number" id="children-count" value="1" min="1">
-
+ 
     <label for="notes">Précisions (allergies, adresse, remarques...)</label>
     <input type="text" id="notes" placeholder="Optionnel">
-
+ 
     <div class="price-box">
       <span class="label">Montant estimé</span>
       <span class="amount" id="price-display">0 €</span>
     </div>
-
+ 
     <label style="margin-top:24px;">Mode de paiement</label>
     <div class="pay-choice">
       <div class="pay-option selected" data-pay="paypal">Payer par PayPal</div>
       <div class="pay-option" data-pay="cash">Payer en espèces</div>
     </div>
-
+ 
     <div id="paypal-button-container"></div>
     <button class="btn hidden" id="btn-confirm-cash">Confirmer la réservation (paiement en espèces)</button>
-
+ 
     <div class="msg" id="booking-msg"></div>
   </div>
 </div>
-
+ 
 <script src="shared-config.js"></script>
 <script>
+/* ================================================================
+   CALENDRIER SUR MESURE (remplace les champs date natifs)
+   ================================================================ */
+const MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const DAYS_FR = ['lu','ma','me','je','ve','sa','di'];
+const WEEKDAYS_FR = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+ 
+function formatDateFR(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  const date = new Date(y, m-1, d);
+  return `${WEEKDAYS_FR[date.getDay()]} ${d} ${MONTHS_FR[m-1]}`;
+}
+ 
+function closeAllCalendars(){
+  document.querySelectorAll('.cal-popup').forEach(p => p.remove());
+}
+document.addEventListener('click', closeAllCalendars);
+ 
+function initDatePicker(inputId){
+  const nativeInput = document.getElementById(inputId);
+  if(!nativeInput) return;
+  nativeInput.classList.add('hidden');
+ 
+  const field = document.createElement('div');
+  field.className = 'date-field';
+  field.innerHTML = `<span class="date-display placeholder">jj/mm/aaaa</span><span class="cal-icon">&#9679;</span>`;
+  nativeInput.parentNode.insertBefore(field, nativeInput);
+ 
+  let viewYear, viewMonth;
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+ 
+  function renderCalendar(popup){
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    let startWeekday = (firstDay.getDay() + 6) % 7; // lundi = 0
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const selectedIso = nativeInput.value;
+ 
+    let cellsHtml = '';
+    for(let i=startWeekday-1; i>=0; i--){
+      cellsHtml += `<div class="cal-day muted">${daysInPrevMonth-i}</div>`;
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const iso = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isPast = iso < todayIso;
+      const isToday = iso === todayIso;
+      const isSelected = iso === selectedIso;
+      let cls = 'cal-day';
+      if(isPast) cls += ' past';
+      if(isToday) cls += ' today';
+      if(isSelected) cls += ' selected';
+      cellsHtml += `<div class="${cls}" data-iso="${iso}">${d}</div>`;
+    }
+    const trailing = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
+    for(let d=1; d<=trailing; d++){
+      cellsHtml += `<div class="cal-day muted">${d}</div>`;
+    }
+ 
+    popup.innerHTML = `
+      <div class="cal-header">
+        <button type="button" class="cal-nav" data-nav="-1">‹</button>
+        <span class="cal-month">${MONTHS_FR[viewMonth]} ${viewYear}</span>
+        <button type="button" class="cal-nav" data-nav="1">›</button>
+      </div>
+      <div class="cal-weekdays">${DAYS_FR.map(d=>`<span>${d}</span>`).join('')}</div>
+      <div class="cal-days">${cellsHtml}</div>
+    `;
+ 
+    popup.querySelector('[data-nav="-1"]').onclick = () => { viewMonth--; if(viewMonth<0){viewMonth=11; viewYear--;} renderCalendar(popup); };
+    popup.querySelector('[data-nav="1"]').onclick = () => { viewMonth++; if(viewMonth>11){viewMonth=0; viewYear++;} renderCalendar(popup); };
+    popup.querySelectorAll('.cal-day[data-iso]:not(.past)').forEach(cell => {
+      cell.onclick = () => {
+        nativeInput.value = cell.dataset.iso;
+        field.querySelector('.date-display').textContent = formatDateFR(cell.dataset.iso);
+        field.querySelector('.date-display').classList.remove('placeholder');
+        nativeInput.dispatchEvent(new Event('input'));
+        popup.remove();
+      };
+    });
+  }
+ 
+  field.onclick = (e) => {
+    e.stopPropagation();
+    closeAllCalendars();
+    const existing = nativeInput.value;
+    const base = existing ? new Date(existing) : today;
+    viewYear = base.getFullYear();
+    viewMonth = base.getMonth();
+ 
+    const popup = document.createElement('div');
+    popup.className = 'cal-popup';
+    popup.onclick = (ev) => ev.stopPropagation();
+    document.body.appendChild(popup);
+ 
+    const rect = field.getBoundingClientRect();
+    let left = window.scrollX + rect.left;
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - 290 - 16;
+    if(left > maxLeft) left = maxLeft;
+    popup.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+    popup.style.left = left + 'px';
+ 
+    renderCalendar(popup);
+  };
+}
+ 
+['hourly-date','night-date','multi-start','multi-end'].forEach(initDatePicker);
+ 
 let currentUser = null;
 let currentMode = "hourly";
 let currentPayment = "paypal";
-
+ 
 function showMsg(id, text, type){
   const el = document.getElementById(id);
   el.textContent = text;
   el.className = 'msg show ' + type;
 }
-
+ 
 /* ================================================================
    VERIFICATION DE CONNEXION — redirige si pas connecte
    ================================================================ */
@@ -124,7 +232,7 @@ function showMsg(id, text, type){
     showDebug("Vérification de session : " + err.message);
   }
 })();
-
+ 
 document.getElementById('btn-logout').onclick = async () => {
   try {
     if(supabase) await supabase.auth.signOut();
@@ -134,7 +242,7 @@ document.getElementById('btn-logout').onclick = async () => {
     window.location.href = "connexion.html";
   }
 };
-
+ 
 /* ================================================================
    MODES DE RESERVATION
    ================================================================ */
@@ -148,7 +256,7 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
     updatePrice();
   };
 });
-
+ 
 /* ================================================================
    CALCUL DU PRIX
    ================================================================ */
@@ -157,7 +265,7 @@ function updatePrice(){
   document.getElementById('price-display').textContent = amount.toFixed(2) + " €";
   renderPaymentUI();
 }
-
+ 
 function computeAmount(){
   const R = CONFIG.RATES;
   if(currentMode === 'hourly'){
@@ -190,13 +298,13 @@ function computeAmount(){
   }
   return 0;
 }
-
+ 
 ['hourly-date','hourly-start','hourly-end','night-count','night-date','multi-start','multi-end']
   .forEach(id => {
     const el = document.getElementById(id);
     if(el) el.addEventListener('input', updatePrice);
   });
-
+ 
 /* ================================================================
    PAIEMENT
    ================================================================ */
@@ -208,7 +316,7 @@ document.querySelectorAll('.pay-option').forEach(opt => {
     renderPaymentUI();
   };
 });
-
+ 
 function renderPaymentUI(){
   if(!currentUser){
     showDebug("Impossible d'afficher le paiement : utilisateur non chargé (problème de connexion à Supabase).");
@@ -216,7 +324,7 @@ function renderPaymentUI(){
   }
   const paypalContainer = document.getElementById('paypal-button-container');
   const cashBtn = document.getElementById('btn-confirm-cash');
-
+ 
   if(currentPayment === 'cash'){
     paypalContainer.innerHTML = '';
     cashBtn.classList.remove('hidden');
@@ -224,7 +332,7 @@ function renderPaymentUI(){
   }
   cashBtn.classList.add('hidden');
   paypalContainer.innerHTML = '';
-
+ 
   try {
     if(!window.paypal){
       const s = document.createElement('script');
@@ -239,7 +347,7 @@ function renderPaymentUI(){
     showDebug("PayPal : " + err.message);
   }
 }
-
+ 
 function renderPaypalButtons(){
   const container = document.getElementById('paypal-button-container');
   container.innerHTML = '';
@@ -260,11 +368,11 @@ function renderPaypalButtons(){
     }
   }).render('#paypal-button-container');
 }
-
+ 
 document.getElementById('btn-confirm-cash').onclick = async () => {
   await saveReservation('cash', 'en attente (espèces)', null);
 };
-
+ 
 /* ================================================================
    ENREGISTREMENT + EMAILS
    ================================================================ */
@@ -273,7 +381,7 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
   const amount = computeAmount();
   const children = document.getElementById('children-count').value;
   const notes = document.getElementById('notes').value;
-
+ 
   let details = {};
   if(currentMode === 'hourly'){
     details = {
@@ -292,7 +400,7 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
       end_date: document.getElementById('multi-end').value
     };
   }
-
+ 
   const reservation = {
     user_id: currentUser.id,
     parent_email: currentUser.email,
@@ -307,17 +415,17 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
     payment_status: paymentStatus,
     paypal_order_id: paypalOrderId
   };
-
+ 
   const { error } = await supabase.from('reservations').insert(reservation);
   if(error){
     showMsg('booking-msg', "Erreur lors de l'enregistrement : " + error.message, 'err');
     return;
   }
-
+ 
   showMsg('booking-msg', "Réservation envoyée ! Vous recevrez une confirmation par e-mail sous peu.", 'ok');
-
+ 
   const detailsText = JSON.stringify(details, null, 2);
-
+ 
   if(window.emailjs){
     emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_OWNER, {
       to_email: CONFIG.OWNER_EMAIL,
@@ -332,7 +440,7 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
       payment_method: paymentMethod,
       payment_status: paymentStatus
     });
-
+ 
     emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_PARENT, {
       to_email: reservation.parent_email,
       parent_name: reservation.parent_name,
@@ -347,6 +455,7 @@ async function saveReservation(paymentMethod, paymentStatus, paypalOrderId){
   }
 }
 </script>
-
+ 
 </body>
 </html>
+ 
