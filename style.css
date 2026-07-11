@@ -137,3 +137,64 @@ input:focus, select:focus{outline:none; border-color:var(--gold);}
 .hidden{display:none !important;}
 
 #debug-banner{display:none;}
+
+/* ---------- Calendrier sur mesure ---------- */
+.date-field{
+  border:1px solid var(--hair);
+  background:var(--ivory);
+  padding:11px 12px;
+  cursor:pointer;
+  font-size:14.5px;
+  color:var(--ink);
+  display:flex; align-items:center; justify-content:space-between;
+  user-select:none;
+}
+.date-field:hover{border-color:var(--gold);}
+.date-field .date-display.placeholder{color:#a39c8c;}
+.date-field .cal-icon{color:var(--gold); font-size:13px; opacity:0.8;}
+
+.cal-popup{
+  position:absolute;
+  z-index:1000;
+  background:#fff;
+  border:1px solid var(--hair);
+  box-shadow:0 16px 40px rgba(28,31,46,0.18);
+  padding:18px;
+  width:290px;
+  max-width:calc(100vw - 32px);
+}
+.cal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.cal-header .cal-month{
+  font-family:'Fraunces', serif; font-style:italic; font-size:16px; color:var(--ink);
+  text-transform:capitalize;
+}
+.cal-nav{
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--hair); cursor:pointer; color:var(--stone); background:#fff;
+  font-size:13px; padding:0;
+}
+.cal-nav:hover{border-color:var(--gold); color:var(--wine);}
+.cal-weekdays{
+  display:grid; grid-template-columns:repeat(7,1fr);
+  margin-bottom:4px;
+}
+.cal-weekdays span{
+  text-align:center; font-size:10px; letter-spacing:0.04em; color:var(--stone); text-transform:uppercase;
+}
+.cal-days{
+  display:grid; grid-template-columns:repeat(7,1fr); gap:2px;
+}
+.cal-day{
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:13px; cursor:pointer; color:var(--ink); border-radius:50%;
+}
+.cal-day:hover{background:rgba(169,131,75,0.16);}
+.cal-day.muted{color:#d3cebf; cursor:default;}
+.cal-day.muted:hover{background:none;}
+.cal-day.today{border:1px solid var(--gold);}
+.cal-day.selected{background:var(--ink); color:var(--ivory);}
+.cal-day.past{color:#d8d3c8; cursor:not-allowed;}
+.cal-day.past:hover{background:none;}
