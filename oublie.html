@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mot de passe oublié — L'atelier des enfants </title>
+<title>Mot de passe oublié — Oriane Zinsou</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
-
+ 
 <div class="topbar">
   <a href="index.html" class="back">← Retour au site</a>
-  <div class="brand">L'atelier des enfants </div>
+  <div class="brand">Oriane Zinsou</div>
 </div>
-
+ 
 <div class="wrap">
   <span class="eyebrow">Espace parents</span>
   <h1 class="title" id="page-title">Mot de passe oublié</h1>
   <p class="subtitle" id="page-subtitle">Recevez un lien pour le réinitialiser</p>
-
+ 
   <div class="card">
     <!-- Ecran 1 : demande du lien -->
     <div id="request-form">
@@ -31,7 +31,7 @@
       <div class="msg" id="forgot-msg"></div>
       <div class="switch-mode"><a href="connexion.html">Retour à la connexion</a></div>
     </div>
-
+ 
     <!-- Ecran 2 : saisie du nouveau mot de passe (apres clic sur le lien recu par mail) -->
     <div id="reset-form" class="hidden">
       <p style="font-size:13.5px; color:var(--stone); margin-bottom:8px;">Choisissez votre nouveau mot de passe.</p>
@@ -42,7 +42,7 @@
     </div>
   </div>
 </div>
-
+ 
 <script src="shared-config.js"></script>
 <script>
 function showMsg(id, text, type){
@@ -50,7 +50,7 @@ function showMsg(id, text, type){
   el.textContent = text;
   el.className = 'msg show ' + type;
 }
-
+ 
 document.getElementById('btn-forgot').onclick = async () => {
   if(!supabase){
     showMsg('forgot-msg', "Le service n'est pas disponible. Vérifiez votre connexion internet ou essayez avec Chrome/Safari.", 'err');
@@ -70,7 +70,7 @@ document.getElementById('btn-forgot').onclick = async () => {
   }
   showMsg('forgot-msg', "E-mail envoyé ! Vérifiez votre boîte de réception (et vos spams).", 'ok');
 };
-
+ 
 document.getElementById('btn-reset').onclick = async () => {
   if(!supabase){
     showMsg('reset-msg', "Le service n'est pas disponible.", 'err');
@@ -89,7 +89,7 @@ document.getElementById('btn-reset').onclick = async () => {
   showMsg('reset-msg', "Mot de passe mis à jour ! Redirection...", 'ok');
   setTimeout(() => { window.location.href = "reservation.html"; }, 1200);
 };
-
+ 
 // Si Supabase nous renvoie ici suite au clic sur le lien recu par mail,
 // on bascule automatiquement sur le formulaire "nouveau mot de passe"
 if(supabase){
@@ -103,6 +103,7 @@ if(supabase){
   });
 }
 </script>
-
+ 
 </body>
 </html>
+ 
