@@ -4,26 +4,30 @@
 const CONFIG = {
   SUPABASE_URL: "https://psvmmughgagggalavnrv.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_C-tEmOPK1iRR6bKG490hTQ_CIDpi45o",
- 
+
   EMAILJS_PUBLIC_KEY: "qtSxvtlkT5Oyebnw-",
   EMAILJS_SERVICE_ID: "service_11d8zur",
   EMAILJS_TEMPLATE_OWNER: "template_y97c61m",
   EMAILJS_TEMPLATE_PARENT: "template_amojq6e",
- 
+
   PAYPAL_CLIENT_ID: "Afan1JosdweYaD3YhMbqrwahEbsONCF_F2Di3MzNv6iOtlal7rozQGX3k39leF99D43ZZULcrdNuVfDz",
- 
+
   OWNER_EMAIL: "zinsouorianerocmel@gmail.com",
   OWNER_NAME: "Oriane Zinsou",
- 
+
   RATES: {
     day: 14,
     evening: 17,
     night: 90,
     multiday: 70
   },
-  EVENING_STARTS_AT: 19
+  EVENING_STARTS_AT: 19,
+
+  // Passe a true une fois l'acces PayPal "Live" valide (plus d'erreur 500 dans le journal PayPal)
+  PAYPAL_LIVE_READY: false,
+  PAYPAL_ME_LINK: "https://www.paypal.com/paypalme/latelierdesenfants67"
 };
- 
+
 /* ================================================================
    BANDEAU D'ERREUR VISIBLE SUR LA PAGE (debug mobile)
    ================================================================ */
@@ -44,7 +48,7 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   showDebug((e.reason && e.reason.message) ? e.reason.message : String(e.reason));
 });
- 
+
 /* ================================================================
    INITIALISATION SUPABASE / EMAILJS (protegee)
    ================================================================ */
@@ -64,7 +68,7 @@ try {
   showDebug(err.message);
   supabase = null;
 }
- 
+
 try {
   if(window.emailjs){
     emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
@@ -72,4 +76,3 @@ try {
 } catch(err){
   showDebug("EmailJS : " + err.message);
 }
- 
